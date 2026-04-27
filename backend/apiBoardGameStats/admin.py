@@ -8,7 +8,7 @@ import apiBoardGameStats.models as models
 # admin.site.register(models.Partida)
 admin.site.register(models.JogosPartida)
 admin.site.register(models.Classificacao)
-admin.site.register(models.JogoBGG)
+# admin.site.register(models.JogoBGG)
 # admin.site.register(models.CodigoConvite)
 
 
@@ -20,6 +20,11 @@ class JogadorAdmin(admin.ModelAdmin):
 class JogoAdmin(admin.ModelAdmin):
     list_display = ("id", "nome", "anoLancamento", "isExpansao", "bggId", "criadoPor")
     search_fields = ("nome",)
+
+
+class JogoBGGAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "yearpublished", "is_expansion")
+    search_fields = ("name",)
 
 
 class LocalAdmin(admin.ModelAdmin):
@@ -47,6 +52,7 @@ class CodigoConviteAdmin(admin.ModelAdmin):
 
 admin.site.register(models.Jogador, JogadorAdmin)
 admin.site.register(models.Jogo, JogoAdmin)
+admin.site.register(models.JogoBGG, JogoBGGAdmin)
 admin.site.register(models.Local, LocalAdmin)
 admin.site.register(models.Partida, PartidaAdmin)
 admin.site.register(models.CodigoConvite, CodigoConviteAdmin)

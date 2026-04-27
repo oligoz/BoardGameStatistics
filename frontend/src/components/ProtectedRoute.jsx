@@ -20,9 +20,8 @@ function ProtectedRoute({ children }) {
       .get("api/auth/user-data/")
       .then(setIsAuthorized(true))
       .catch((error) => {
-        error.response && error.response.status === 401
-          ? localStorage.removeItem(ACCESS_TOKEN)
-          : alert(error);
+        localStorage.removeItem(ACCESS_TOKEN);
+        console.log(error.response);
         setIsAuthorized(false);
       });
   };

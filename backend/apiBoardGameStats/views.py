@@ -16,7 +16,7 @@ from .serializers import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .models import Jogador, Jogo, Local, Partida, Classificacao, JogoBGG, CodigoConvite
-from django.db import transaction
+from django.db import transaction, connection
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -520,26 +520,30 @@ class JogoBggSearch(viewsets.ModelViewSet):
 
     def get_queryset(self):
         search_query = self.request.query_params.get("search", None)
-        print(f"Search query: {search_query}")
 
         if search_query:
-            # Create a search vector with weights (title is more important than description)
-            vector = SearchVector("name", weight="A") + SearchVector(
-                "yearpublished", weight="B"
-            )
-            query = SearchQuery(search_query, search_type="websearch")
+            db_type = connection.vendor
 
-            # Combine full-text rank and trigram similarity without zeroing valid fuzzy matches.
-            queryset = JogoBGG.objects.annotate(
-                rank=SearchRank(vector, query),
-                similarity=TrigramSimilarity("name", search_query),
-                search=vector,
-            )
-            queryset = (
-                queryset.annotate(combined_score=F("rank") * F("similarity"))
-                .filter(search=query)
-                .order_by("-combined_score", "-rank", "-similarity")
-            )
+            if db_type == "postgresql":
+                # Create a search vector with weights (title is more important than description)
+                vector = SearchVector("name", weight="A") + SearchVector(
+                    "yearpublished", weight="B"
+                )
+                query = SearchQuery(search_query, search_type="websearch")
+
+                # Combine full-text rank and trigram similarity without zeroing valid fuzzy matches.
+                queryset = JogoBGG.objects.annotate(
+                    rank=SearchRank(vector, query),
+                    similarity=TrigramSimilarity("name", search_query),
+                    search=vector,
+                )
+                queryset = (
+                    queryset.annotate(combined_score=F("rank") * F("similarity"))
+                    .filter(search=query)
+                    .order_by("-combined_score", "-rank", "-similarity")
+                )
+            else:
+                queryset = JogoBGG.objects.filter(name__icontains=search_query)
 
         return queryset if search_query else JogoBGG.objects.none()
 
