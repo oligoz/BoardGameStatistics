@@ -1,0 +1,46 @@
+// Custom.scss
+// Option B: Include parts of CoreUI
+
+// 1. Configure any default variable overrides *before* importing modules that
+//    themselves load `variables`.  The functions module (and others) pull in
+//    `_variables.scss` internally, so if you @use it first you cannot later
+//    reconfigure the module.
+@use "sass:map";
+@use "../node_modules/@coreui/coreui/scss/variables" as * with (
+    $body-bg: #10104A,
+    $body-color: #fefffe,
+);
+    
+// 2. Now that the variables module is configured, it's safe to load functions
+//    and the rest of CoreUI.
+@use "../node_modules/@coreui/coreui/scss/functions";
+
+// 4. Include any default map overrides here
+$custom-theme-colors: (
+    "cornflowerblue": #758bfd,
+    "dustyolive":     #6a8d73,
+    "granite":        #526760,
+    "darkgray":       #212631,
+);
+$theme-colors: map.merge($theme-colors, $custom-theme-colors);
+
+// 5. Include remainder of required parts
+@use "../node_modules/@coreui/coreui/scss/maps";
+@use "../node_modules/@coreui/coreui/scss/mixins";
+@use "../node_modules/@coreui/coreui/scss/root";
+
+// 6. Optionally include any other parts as needed
+@use "../node_modules/@coreui/coreui/scss/utilities";
+@use "../node_modules/@coreui/coreui/scss/reboot";
+@use "../node_modules/@coreui/coreui/scss/type";
+@use "../node_modules/@coreui/coreui/scss/images";
+@use "../node_modules/@coreui/coreui/scss/containers";
+@use "../node_modules/@coreui/coreui/scss/grid";
+@use "../node_modules/@coreui/coreui/scss/helpers";
+
+// 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
+// @use "../node_modules/@coreui/coreui/scss/utilities/api";
+
+// 8. Add additional custom code here
+
+@use "../node_modules/@coreui/coreui/scss/coreui";

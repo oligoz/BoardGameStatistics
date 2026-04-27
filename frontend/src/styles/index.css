@@ -1,0 +1,19 @@
+.flex-1 {
+  flex: 1;
+}
+
+.dropdown-noarrow::after {
+  display: none !important;
+}
+
+.jogo-pagination {
+  --cui-pagination-color: white;
+  --cui-pagination-active-bg: #6b7785;
+  --cui-pagination-active-border-color: white;
+  --cui-pagination-bg: #212631;
+  margin-bottom: 0px;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
