@@ -4,6 +4,7 @@ import api from "../../api";
 import {
   CButton,
   CCol,
+  CFormSelect,
   CRow,
   CTab,
   CTable,
@@ -28,6 +29,11 @@ function Statistics() {
   const [selectedLocais, setSelectedLocais] = useState([]);
   const [classificacao, setClassificacao] = useState([]);
   const [showGames, setShowGames] = useState(false);
+  const [firstDate, setFirstDate] = useState(null);
+  const [today, setToday] = useState(null);
+  const [custom, setCustom] = useState(false);
+  const [dateStart, setDateStart] = useState(null);
+  const [dateEnd, setDateEnd] = useState(null);
 
   useEffect(() => {
     api
@@ -36,6 +42,27 @@ function Statistics() {
       .then((data) => {
         setPartidas(data);
         setFilteredPartidas(data);
+        if (data.length > 0) {
+          let earliestDate = new Date(data[0].dataPartida + "T00:00:00");
+          data.forEach((partida) => {
+            const partidaDate = new Date(partida.dataPartida + "T00:00:00");
+            if (partidaDate < earliestDate) {
+              earliestDate = partidaDate;
+            }
+          });
+          setFirstDate(earliestDate);
+          const todayDate = new Date();
+          const todayDay = todayDate.getDate();
+          const todayMonth = todayDate.getMonth();
+          const todayYear = todayDate.getFullYear();
+          setToday(
+            String(todayYear) +
+              "-" +
+              String(todayMonth + 1).padStart(2, "0") +
+              "-" +
+              String(todayDay).padStart(2, "0"),
+          );
+        }
       });
   }, []);
 
@@ -170,13 +197,23 @@ function Statistics() {
         } else {
           return true;
         }
+      })
+      .filter((partida) => {
+        const partidaDate = new Date(partida.dataPartida + "T00:00:00");
+        const dataInicioInput = new Date(
+          document.getElementById("data-inicio").value + "T00:00:00",
+        );
+        const dataFimInput = new Date(
+          document.getElementById("data-fim").value + "T00:00:00",
+        );
+        return partidaDate >= dataInicioInput && partidaDate <= dataFimInput;
       });
     setFilteredPartidas(filtered);
 
     filterJogadoresOptions();
     filterJogoOptions();
     filterLocaisOptions();
-  }, [selectedJogadores, selectedJogos, selectedLocais]);
+  }, [selectedJogadores, selectedJogos, selectedLocais, dateStart, dateEnd]);
 
   useEffect(() => {
     let classificacaoAux = [];
@@ -232,6 +269,51 @@ function Statistics() {
     });
     setClassificacao(classificacaoAux);
   }, [filteredPartidas]);
+
+  const changeDateSelection = (e) => {
+    setCustom(e.value === 4);
+    if (e.value === 0) {
+      document.getElementById("data-inicio").value = firstDate
+        ? firstDate.toISOString().split("T")[0]
+        : "";
+      document.getElementById("data-fim").value = today;
+    } else if (e.value === 1) {
+      const last30Days = new Date(today + "T00:00:00");
+      last30Days.setDate(last30Days.getDate() - 30);
+      document.getElementById("data-inicio").value = last30Days
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("data-fim").value = today;
+    } else if (e.value === 2) {
+      const startOfYear = new Date(today + "T00:00:00");
+      startOfYear.setMonth(0);
+      startOfYear.setDate(1);
+      document.getElementById("data-inicio").value = startOfYear
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("data-fim").value = today;
+    } else if (e.value === 3) {
+      const startOfLastYear = new Date(today + "T00:00:00");
+      startOfLastYear.setFullYear(startOfLastYear.getFullYear() - 1);
+      startOfLastYear.setMonth(0);
+      startOfLastYear.setDate(1);
+      const endOfLastYear = new Date(startOfLastYear);
+      endOfLastYear.setMonth(11);
+      endOfLastYear.setDate(31);
+      document.getElementById("data-inicio").value = startOfLastYear
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("data-fim").value = endOfLastYear
+        .toISOString()
+        .split("T")[0];
+    }
+    updateDate();
+  };
+
+  const updateDate = () => {
+    setDateStart(document.getElementById("data-inicio").value);
+    setDateEnd(document.getElementById("data-fim").value);
+  };
 
   return (
     <div className="p-4">
@@ -397,6 +479,76 @@ function Statistics() {
           />
         </CCol>
       </CRow>
+      <CRow>
+        <CCol>
+          <Select
+            className="form-input bg-secondary"
+            options={[
+              { label: "Todas as datas", value: 0 },
+              { label: "Últimos 30 dias", value: 1 },
+              { label: "Este ano", value: 2 },
+              { label: "Ano passado", value: 3 },
+              { label: "Personalizado", value: 4 },
+            ]}
+            defaultValue={{ label: "Todas as datas", value: 0 }}
+            onChange={(selectedOption) => changeDateSelection(selectedOption)}
+            styles={{
+              control: (base) => ({
+                ...base,
+                backgroundColor: "#6b7785",
+              }),
+              container: (base) => ({
+                ...base,
+                borderStyle: "none",
+                padding: "0px",
+              }),
+              input: (base) => ({
+                ...base,
+                color: "white",
+              }),
+              menu: (base) => ({
+                ...base,
+                backgroundColor: "#6b7785",
+                color: "white",
+              }),
+              option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isFocused ? "#5a6670" : "#6b7785",
+              }),
+              singleValue: (base) => ({
+                ...base,
+                color: "white",
+              }),
+            }}
+          />
+        </CCol>
+      </CRow>
+      <CRow>
+        <CCol>
+          <input
+            type="date"
+            id="data-inicio"
+            name="data-inicio"
+            className="form-input bg-secondary text-white"
+            defaultValue={
+              firstDate ? firstDate.toISOString().split("T")[0] : ""
+            }
+            disabled={!custom}
+            onChange={updateDate}
+          />
+        </CCol>
+        <CCol>
+          <input
+            type="date"
+            id="data-fim"
+            name="data-fim"
+            className="form-input bg-secondary text-white"
+            defaultValue={today ? today : ""}
+            disabled={!custom}
+            onChange={updateDate}
+          />
+        </CCol>
+      </CRow>
       <div className="p-3 bg-darkgray rounded shadow">
         <CTable
           color="dark"
@@ -434,6 +586,7 @@ function Statistics() {
               align="middle"
               className="text-white bg-darkgray"
               hover
+              responsive
             >
               <CTableHead>
                 <CTableRow>
@@ -446,9 +599,11 @@ function Statistics() {
               <CTableBody>
                 {filteredPartidas.map((partida) => (
                   <CTableRow key={partida.id}>
-                    <CTableDataCell>{partida.jogo}</CTableDataCell>
+                    <CTableDataCell>{partida.jogos.join(", ")}</CTableDataCell>
                     <CTableDataCell>
-                      {new Date(partida.dataPartida).toLocaleDateString()}
+                      {new Date(
+                        partida.dataPartida + "T00:00:00",
+                      ).toLocaleDateString()}
                     </CTableDataCell>
                     <CTableDataCell>{partida.local}</CTableDataCell>
                     <CTableDataCell>

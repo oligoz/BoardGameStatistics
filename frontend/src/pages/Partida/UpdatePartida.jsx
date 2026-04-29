@@ -136,14 +136,12 @@ function UpdatePartida() {
             </span>
           </div>
           <hr />
-          <div className="d-flex">
+          <div className="d-flex align-items-center justify-content-between gap-3">
             <span className="fs-5">Classificação</span>
             {edit && (
-              <div className="d-flex flex-column ms-auto">
-                <CButton color="secondary" onClick={changeOrder}>
-                  {order === 1 ? "Mais pontos vence" : "Menos pontos vence"}
-                </CButton>
-              </div>
+              <CButton color="secondary" onClick={changeOrder}>
+                {order === 1 ? "Mais pontos vence" : "Menos pontos vence"}
+              </CButton>
             )}
           </div>
           <form onSubmit={handleSubmit}>
@@ -152,6 +150,7 @@ function UpdatePartida() {
               align="middle"
               className="text-white bg-darkgray"
               hover
+              responsive
             >
               <CTableHead>
                 <CTableRow>

@@ -47,3 +47,9 @@
 ::placeholder {
   color: #a9a9ac !important;
 }
+
+.bg-secondary:disabled {
+  background-color: #6c757d !important;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
