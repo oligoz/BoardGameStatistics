@@ -40,8 +40,6 @@ function Statistics() {
       .get("api/partidas/")
       .then((res) => res.data)
       .then((data) => {
-        setPartidas(data);
-        setFilteredPartidas(data);
         if (data.length > 0) {
           let earliestDate = new Date(data[0].dataPartida + "T00:00:00");
           data.forEach((partida) => {
@@ -63,6 +61,8 @@ function Statistics() {
               String(todayDay).padStart(2, "0"),
           );
         }
+        setPartidas(data);
+        setFilteredPartidas(data);
       });
   }, []);
 
