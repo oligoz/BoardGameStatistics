@@ -106,7 +106,7 @@ function Statistics() {
     setLocaisOptions(allLocais);
   }, [partidas]);
 
-  const filterJogadoresOptions = () => {
+  useEffect(() => {
     const newJogadoresOptions = jogadores.filter((jogador) => {
       return partidas.some((partida) => {
         return (
@@ -127,9 +127,17 @@ function Statistics() {
       });
     });
     setJogadoresOptions(newJogadoresOptions);
-  };
+  }, [
+    partidas,
+    jogadores,
+    selectedJogadores,
+    selectedJogos,
+    selectedLocais,
+    dateStart,
+    dateEnd,
+  ]);
 
-  const filterJogoOptions = () => {
+  useEffect(() => {
     const newJogosOptions = jogos.filter((jogo) => {
       return partidas.some((partida) => {
         return (
@@ -152,9 +160,17 @@ function Statistics() {
       });
     });
     setJogosOptions(newJogosOptions);
-  };
+  }, [
+    partidas,
+    jogos,
+    selectedJogadores,
+    selectedJogos,
+    selectedLocais,
+    dateStart,
+    dateEnd,
+  ]);
 
-  const filterLocaisOptions = () => {
+  useEffect(() => {
     const newLocaisOptions = locais.filter((local) => {
       return partidas.some((partida) => {
         return (
@@ -175,7 +191,15 @@ function Statistics() {
       });
     });
     setLocaisOptions(newLocaisOptions);
-  };
+  }, [
+    partidas,
+    locais,
+    selectedJogadores,
+    selectedJogos,
+    selectedLocais,
+    dateStart,
+    dateEnd,
+  ]);
 
   const filterJogadores = (e) => {
     let auxJogadores = [];
@@ -237,10 +261,6 @@ function Statistics() {
         return partidaDate >= dataInicioInput && partidaDate <= dataFimInput;
       });
     setFilteredPartidas(filtered);
-
-    filterJogadoresOptions();
-    filterJogoOptions();
-    filterLocaisOptions();
   }, [
     partidas,
     selectedJogadores,
@@ -582,14 +602,16 @@ function Statistics() {
           </CTableHead>
           <CTableBody>
             {classificacao
-              .sort((a, b) => b.pontos - a.pontos)
-              .map((c, index) => (
-                <CTableRow key={c.jogador}>
-                  <CTableDataCell>{index + 1}º</CTableDataCell>
-                  <CTableDataCell>{c.jogador}</CTableDataCell>
-                  <CTableDataCell>{c.pontos}</CTableDataCell>
-                </CTableRow>
-              ))}
+              ? classificacao
+                  .sort((a, b) => b.pontos - a.pontos)
+                  .map((c, index) => (
+                    <CTableRow key={c.jogador}>
+                      <CTableDataCell>{index + 1}º</CTableDataCell>
+                      <CTableDataCell>{c.jogador}</CTableDataCell>
+                      <CTableDataCell>{c.pontos}</CTableDataCell>
+                    </CTableRow>
+                  ))
+              : null}
           </CTableBody>
         </CTable>
         <CButton color="secondary" onClick={() => setShowGames(!showGames)}>
