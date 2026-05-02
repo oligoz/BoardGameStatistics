@@ -46,17 +46,8 @@ function DeleteJogo() {
       setLoading(true);
       api
         .delete("api/jogo/delete/" + id + "/")
-        .then((res) => {
-          if (res.status === 204) {
-            navigate("/jogos");
-          } else {
-            alert("Falha ao deletar jogo");
-          }
-        })
-        .catch((error) => {
-          alert(error.response.data.msg);
-          console.log(error.response.data.msg);
-        })
+        .then((res) => navigate("/jogos"))
+        .catch((error) => alert(error.response.data.msg))
         .finally(() => setLoading(false));
     }
   };

@@ -21,11 +21,7 @@ function FormLocal({ type, local }) {
   const updateLocal = (nome) => {
     api
       .patch("api/local/update/" + local.id + "/", { nome })
-      .then((res) => {
-        if (res.status === 200) alert("Local atualizado com sucesso");
-        else alert("Falha ao atualizar local");
-        navigate("/locais");
-      })
+      .then((res) => navigate("/locais"))
       .catch((error) => {
         setErrors(error.response.data.nome);
       })
@@ -35,11 +31,7 @@ function FormLocal({ type, local }) {
   const createLocal = (nome) => {
     api
       .post("/api/local/create/", { nome })
-      .then((res) => {
-        if (res.status === 201) alert("Local criado com sucesso");
-        else alert("Falha ao criar local");
-        navigate("/locais");
-      })
+      .then((res) => navigate("/locais"))
       .catch((error) => {
         setErrors(error.response.data.nome);
       })
@@ -51,13 +43,7 @@ function FormLocal({ type, local }) {
       setLoading(true);
       api
         .delete("api/local/delete/" + id + "/")
-        .then((res) => {
-          if (res.status === 204) {
-            navigate("/locais");
-          } else {
-            alert("Falha ao deletar local");
-          }
-        })
+        .then((res) => navigate("/locais"))
         .catch((error) => {
           setErrors(error.response.data.msg);
         })

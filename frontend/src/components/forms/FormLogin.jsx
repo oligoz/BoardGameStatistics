@@ -28,7 +28,6 @@ function FormLogin() {
     } catch (error) {
       formEl.reset();
       setErro(true);
-      // alert(error);
     } finally {
       setLoading(false);
     }

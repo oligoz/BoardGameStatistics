@@ -35,9 +35,7 @@ function FormPartida() {
       .then((data) => {
         navigate("/partida/update/" + data.id);
       })
-      .catch((error) => {
-        alert(error);
-      })
+      .catch((error) => alert(error))
       .finally(() => {
         setLoading(false);
       });

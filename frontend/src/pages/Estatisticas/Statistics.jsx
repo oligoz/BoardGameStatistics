@@ -1,12 +1,10 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
 import api from "../../api";
 import {
   CButton,
   CCol,
-  CFormSelect,
   CRow,
-  CTab,
   CTable,
   CTableBody,
   CTableDataCell,
@@ -32,8 +30,8 @@ function Statistics() {
   const [firstDate, setFirstDate] = useState(null);
   const [today, setToday] = useState(null);
   const [custom, setCustom] = useState(false);
-  const [dateStart, setDateStart] = useState(null);
-  const [dateEnd, setDateEnd] = useState(null);
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
 
   useEffect(() => {
     api
@@ -54,6 +52,14 @@ function Statistics() {
           const todayMonth = todayDate.getMonth();
           const todayYear = todayDate.getFullYear();
           setToday(
+            String(todayYear) +
+              "-" +
+              String(todayMonth + 1).padStart(2, "0") +
+              "-" +
+              String(todayDay).padStart(2, "0"),
+          );
+          setDateStart(earliestDate.toISOString().split("T")[0]);
+          setDateEnd(
             String(todayYear) +
               "-" +
               String(todayMonth + 1).padStart(2, "0") +
@@ -104,11 +110,19 @@ function Statistics() {
     const newJogadoresOptions = jogadores.filter((jogador) => {
       return partidas.some((partida) => {
         return (
-          partida.jogadores.includes(jogador.jogador) &&
+          [jogador.jogador, ...selectedJogadores].every((j) =>
+            partida.jogadores.includes(j),
+          ) &&
           (selectedJogos.length === 0 ||
             selectedJogos.every((jogo) => partida.jogos.includes(jogo))) &&
           (selectedLocais.length === 0 ||
-            selectedLocais.includes(partida.local))
+            selectedLocais.includes(partida.local)) &&
+          (dateStart === "" ||
+            dateEnd === "" ||
+            (new Date(partida.dataPartida + "T00:00:00") >=
+              new Date(dateStart + "T00:00:00") &&
+              new Date(partida.dataPartida + "T00:00:00") <=
+                new Date(dateEnd + "T00:00:00")))
         );
       });
     });
@@ -119,13 +133,21 @@ function Statistics() {
     const newJogosOptions = jogos.filter((jogo) => {
       return partidas.some((partida) => {
         return (
-          partida.jogos.includes(jogo.jogo) &&
+          [jogo.jogo, ...selectedJogos].every((j) =>
+            partida.jogos.includes(j),
+          ) &&
           (selectedJogadores.length === 0 ||
             selectedJogadores.every((jogador) =>
               partida.jogadores.includes(jogador),
             )) &&
           (selectedLocais.length === 0 ||
-            selectedLocais.includes(partida.local))
+            selectedLocais.includes(partida.local)) &&
+          (dateStart === "" ||
+            dateEnd === "" ||
+            (new Date(partida.dataPartida + "T00:00:00") >=
+              new Date(dateStart + "T00:00:00") &&
+              new Date(partida.dataPartida + "T00:00:00") <=
+                new Date(dateEnd + "T00:00:00")))
         );
       });
     });
@@ -142,7 +164,13 @@ function Statistics() {
               partida.jogadores.includes(jogador),
             )) &&
           (selectedJogos.length === 0 ||
-            selectedJogos.every((jogo) => partida.jogos.includes(jogo)))
+            selectedJogos.every((jogo) => partida.jogos.includes(jogo))) &&
+          (dateStart === "" ||
+            dateEnd === "" ||
+            (new Date(partida.dataPartida + "T00:00:00") >=
+              new Date(dateStart + "T00:00:00") &&
+              new Date(partida.dataPartida + "T00:00:00") <=
+                new Date(dateEnd + "T00:00:00")))
         );
       });
     });
@@ -199,13 +227,13 @@ function Statistics() {
         }
       })
       .filter((partida) => {
+        if (!dateStart || !dateEnd) {
+          return true;
+        }
+
         const partidaDate = new Date(partida.dataPartida + "T00:00:00");
-        const dataInicioInput = new Date(
-          document.getElementById("data-inicio").value + "T00:00:00",
-        );
-        const dataFimInput = new Date(
-          document.getElementById("data-fim").value + "T00:00:00",
-        );
+        const dataInicioInput = new Date(dateStart + "T00:00:00");
+        const dataFimInput = new Date(dateEnd + "T00:00:00");
         return partidaDate >= dataInicioInput && partidaDate <= dataFimInput;
       });
     setFilteredPartidas(filtered);
@@ -213,16 +241,23 @@ function Statistics() {
     filterJogadoresOptions();
     filterJogoOptions();
     filterLocaisOptions();
-  }, [selectedJogadores, selectedJogos, selectedLocais, dateStart, dateEnd]);
+  }, [
+    partidas,
+    selectedJogadores,
+    selectedJogos,
+    selectedLocais,
+    dateStart,
+    dateEnd,
+  ]);
 
   useEffect(() => {
     let classificacaoAux = [];
     if (selectedJogadores.length > 0) {
-      selectedJogadores.map((j) =>
-        classificacaoAux.push({ jogador: j, pontos: 0 }),
-      );
+      selectedJogadores.forEach((j) => {
+        classificacaoAux.push({ jogador: j, pontos: 0 });
+      });
     } else {
-      jogadoresOptions.map((jogador) => {
+      jogadoresOptions.forEach((jogador) => {
         classificacaoAux.push({
           jogador: jogador.jogador,
           pontos: 0,
@@ -268,30 +303,24 @@ function Statistics() {
       });
     });
     setClassificacao(classificacaoAux);
-  }, [filteredPartidas]);
+  }, [filteredPartidas, selectedJogadores, jogadoresOptions]);
 
   const changeDateSelection = (e) => {
     setCustom(e.value === 4);
     if (e.value === 0) {
-      document.getElementById("data-inicio").value = firstDate
-        ? firstDate.toISOString().split("T")[0]
-        : "";
-      document.getElementById("data-fim").value = today;
+      setDateStart(firstDate ? firstDate.toISOString().split("T")[0] : "");
+      setDateEnd(today || "");
     } else if (e.value === 1) {
       const last30Days = new Date(today + "T00:00:00");
       last30Days.setDate(last30Days.getDate() - 30);
-      document.getElementById("data-inicio").value = last30Days
-        .toISOString()
-        .split("T")[0];
-      document.getElementById("data-fim").value = today;
+      setDateStart(last30Days.toISOString().split("T")[0]);
+      setDateEnd(today || "");
     } else if (e.value === 2) {
       const startOfYear = new Date(today + "T00:00:00");
       startOfYear.setMonth(0);
       startOfYear.setDate(1);
-      document.getElementById("data-inicio").value = startOfYear
-        .toISOString()
-        .split("T")[0];
-      document.getElementById("data-fim").value = today;
+      setDateStart(startOfYear.toISOString().split("T")[0]);
+      setDateEnd(today || "");
     } else if (e.value === 3) {
       const startOfLastYear = new Date(today + "T00:00:00");
       startOfLastYear.setFullYear(startOfLastYear.getFullYear() - 1);
@@ -300,19 +329,9 @@ function Statistics() {
       const endOfLastYear = new Date(startOfLastYear);
       endOfLastYear.setMonth(11);
       endOfLastYear.setDate(31);
-      document.getElementById("data-inicio").value = startOfLastYear
-        .toISOString()
-        .split("T")[0];
-      document.getElementById("data-fim").value = endOfLastYear
-        .toISOString()
-        .split("T")[0];
+      setDateStart(startOfLastYear.toISOString().split("T")[0]);
+      setDateEnd(endOfLastYear.toISOString().split("T")[0]);
     }
-    updateDate();
-  };
-
-  const updateDate = () => {
-    setDateStart(document.getElementById("data-inicio").value);
-    setDateEnd(document.getElementById("data-fim").value);
   };
 
   return (
@@ -530,11 +549,9 @@ function Statistics() {
             id="data-inicio"
             name="data-inicio"
             className="form-input bg-secondary text-white"
-            defaultValue={
-              firstDate ? firstDate.toISOString().split("T")[0] : ""
-            }
+            value={dateStart}
             disabled={!custom}
-            onChange={updateDate}
+            onChange={(e) => setDateStart(e.target.value)}
           />
         </CCol>
         <CCol>
@@ -543,9 +560,9 @@ function Statistics() {
             id="data-fim"
             name="data-fim"
             className="form-input bg-secondary text-white"
-            defaultValue={today ? today : ""}
+            value={dateEnd}
             disabled={!custom}
-            onChange={updateDate}
+            onChange={(e) => setDateEnd(e.target.value)}
           />
         </CCol>
       </CRow>

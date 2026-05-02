@@ -25,7 +25,6 @@ function BggGames() {
       );
       //   window.location.replace("/");
     } catch (error) {
-      console.error(error);
       alert(error);
     } finally {
       setLoading(false);

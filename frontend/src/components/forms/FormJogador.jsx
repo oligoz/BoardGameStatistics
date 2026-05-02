@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
-import { CSpinner, CAlert, CButton, CFormInput } from "@coreui/react";
+import { CSpinner, CButton, CFormInput } from "@coreui/react";
 import "../../styles/Form.css";
 
 function FormJogador({ type, jogador }) {
@@ -22,8 +22,6 @@ function FormJogador({ type, jogador }) {
     api
       .patch("api/jogador/update/" + jogador.id + "/", { nome })
       .then((res) => {
-        if (res.status === 200) alert("Jogador atualizado com sucesso");
-        else alert("Falha ao atualizar jogador");
         navigate("/jogadores");
       })
       .catch((error) => setErrors(error.response.data.nome))
@@ -34,8 +32,6 @@ function FormJogador({ type, jogador }) {
     api
       .post("api/jogador/create/", { nome })
       .then((res) => {
-        if (res.status === 201) alert("Jogador criado com sucesso");
-        else alert("Falha ao criar jogador");
         navigate("/jogadores");
       })
       .catch((error) => setErrors(error.response.data.nome))
@@ -47,17 +43,8 @@ function FormJogador({ type, jogador }) {
       setLoading(true);
       api
         .delete("api/jogador/delete/" + id + "/")
-        .then((res) => {
-          if (res.status === 204) {
-            navigate("/jogadores");
-          } else {
-            alert("Falha ao deletar jogador");
-          }
-        })
-        .catch((error) => {
-          setErrors(error.response.data.msg);
-          console.log(error.response.data.msg);
-        })
+        .then((res) => navigate("/jogadores"))
+        .catch((error) => setErrors(error.response.data.msg))
         .finally(() => setLoading(false));
     }
   };

@@ -36,10 +36,7 @@ function UpdatePartida() {
           setEdit(true);
         }
       })
-      .catch((error) => {
-        alert(error.response.data.error);
-        console.log(error.response);
-      });
+      .catch((error) => alert(error.response.data.error));
   }, [id]);
 
   const changeOrder = (e) => {
