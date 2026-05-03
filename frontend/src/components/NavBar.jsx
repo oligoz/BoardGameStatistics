@@ -29,6 +29,7 @@ function NavBar() {
   const logOutAux = () => {
     localStorage.clear();
     clearUser();
+    setVisible(!visible);
     navigate("/");
   };
 
@@ -63,40 +64,68 @@ function NavBar() {
         <CCollapse className="navbar-collapse" visible={visible}>
           <CNavbarNav>
             <CNavItem>
-              <Link to="/estatisticas" className="nav-link">
+              <Link
+                to="/estatisticas"
+                className="nav-link"
+                onClick={() => setVisible(!visible)}
+              >
                 Estatisticas
               </Link>
             </CNavItem>
             <CNavItem>
-              <Link to="/partidas" className="nav-link">
+              <Link
+                to="/partidas"
+                className="nav-link"
+                onClick={() => setVisible(!visible)}
+              >
                 Partidas
               </Link>
             </CNavItem>
             <CNavItem>
-              <Link to="/jogos" className="nav-link">
+              <Link
+                to="/jogos"
+                className="nav-link"
+                onClick={() => setVisible(!visible)}
+              >
                 Jogos
               </Link>
             </CNavItem>
             <CNavItem>
-              <Link to="/jogadores" className="nav-link">
+              <Link
+                to="/jogadores"
+                className="nav-link"
+                onClick={() => setVisible(!visible)}
+              >
                 Jogadores
               </Link>
             </CNavItem>
             <CNavItem>
-              <Link to="/locais" className="nav-link">
+              <Link
+                to="/locais"
+                className="nav-link"
+                onClick={() => setVisible(!visible)}
+              >
                 Locais
               </Link>
             </CNavItem>
             {user !== null && user.is_staff ? (
               <CNavItem>
-                <Link to="/admin" className="nav-link">
+                <Link
+                  to="/admin"
+                  className="nav-link"
+                  onClick={() => setVisible(!visible)}
+                >
                   Admin
                 </Link>
               </CNavItem>
             ) : null}
             {user === null || user.id === null ? (
               <CNavItem>
-                <Link to="/login" className="nav-link">
+                <Link
+                  to="/login"
+                  className="nav-link"
+                  onClick={() => setVisible(!visible)}
+                >
                   Login
                 </Link>
               </CNavItem>

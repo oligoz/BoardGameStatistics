@@ -310,13 +310,7 @@ function Statistics() {
               pontos = numPosicoes / 2 - classificacao.posicao;
             }
           } else {
-            if (classificacao.posicao < Math.ceil(numPosicoes / 2)) {
-              pontos = Math.ceil(numPosicoes / 2) - classificacao.posicao;
-            } else if (classificacao.posicao > Math.ceil(numPosicoes / 2)) {
-              pontos = Math.ceil(numPosicoes / 2) - classificacao.posicao;
-            } else {
-              pontos = 0;
-            }
+            pontos = (numPosicoes + 1) / 2 - classificacao.posicao;
           }
           classificacaoAux[jogadorIndex].pontos += pontos;
         }
