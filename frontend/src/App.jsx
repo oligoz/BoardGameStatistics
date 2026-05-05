@@ -23,6 +23,7 @@ import UpdatePartida from "./pages/Partida/UpdatePartida";
 import Statistics from "./pages/Estatisticas/Statistics";
 import UpdateLocal from "./pages/Local/UpdateLocal";
 import DeleteJogo from "./pages/Jogo/DeleteJogo";
+import BggPlays from "./pages/BggPlays";
 
 function App() {
   return (
@@ -79,6 +80,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BggGames />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bgg-plays"
+          element={
+            <ProtectedRoute>
+              <BggPlays />
             </ProtectedRoute>
           }
         />

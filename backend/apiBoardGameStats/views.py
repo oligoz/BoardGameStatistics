@@ -479,6 +479,7 @@ class ClassificacaoListCreateView(generics.ListCreateAPIView):
 
 
 @api_view(["POST"])
+@permission_classes([IsAdminUser])
 def import_bbg_games_file(request):
     file = request.FILES.get("file")
     if not file:
@@ -563,3 +564,162 @@ def get_codigo_convite(request):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response({"codigo": codigo}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAdminUser])
+def import_bgg_plays_file(request):
+    file = request.FILES.get("file")
+    if not file:
+        return Response(
+            {"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        decoded_content = file.read().decode("utf-8")
+        lines = decoded_content.splitlines()
+        saved_players_line = next(
+            (line for line in lines if line.startswith("Saved Players:")), None
+        )
+        saved_locations_line = next(
+            (line for line in lines if line.startswith("Saved Locations:")), None
+        )
+        saved_games_line = next(
+            (line for line in lines if line.startswith("Saved Games:")), None
+        )
+
+        saved_players = (
+            saved_players_line.split(":")[1].strip().split(", ")
+            if saved_players_line
+            else []
+        )
+        saved_locations = (
+            saved_locations_line.split(":")[1].strip().split(", ")
+            if saved_locations_line
+            else []
+        )
+        saved_games = (
+            saved_games_line.split(":")[1].strip().split(" ")
+            if saved_games_line
+            else []
+        )
+
+        # print(f"Saved Players: {saved_players}", len(saved_players))
+        # print(f"Saved Locations: {saved_locations}", len(saved_locations))
+        # print(f"Saved Games: {saved_games}", len(saved_games))
+
+        # Convert plays in output.txt to a list of dictionaries
+        plays = []
+        current_play = {}
+        for line in lines:
+            if line.startswith("Game:"):
+                if current_play:
+                    plays.append(current_play)
+                current_play = {"games": line.split(":")[1].strip()}
+            elif line.startswith("Expansions:"):
+                current_play["games"] += " " + line.split(":")[1].strip()
+            elif line.startswith("Location:"):
+                current_play["location"] = line.split(":")[1].strip()
+            elif line.startswith("Date:"):
+                current_play["date"] = line.split(":")[1].strip()
+            elif line.startswith("Player:"):
+                if "players" not in current_play:
+                    current_play["players"] = []
+                player_info = line.split(", ")
+                player_name = player_info[0].split(":")[1].strip()
+                player_score = int(player_info[1].split(":")[1].strip())
+                player_rank = player_info[2].split(":")[1].strip()
+                current_play["players"].append(
+                    {
+                        "name": player_name,
+                        "score": player_score,
+                        "rank": player_rank,
+                    }
+                )
+        if current_play:
+            plays.append(current_play)
+        # print(f"Plays: {plays[:3]}", len(plays))
+
+        # Add saved games, players and locations to the database if they don't exist
+        with transaction.atomic():
+            for gameID in saved_games:
+                if not Jogo.objects.filter(bggId=gameID).exists():
+                    # Catch game from JogoBGG and create Jogo with same values
+                    try:
+                        jogo_bgg = JogoBGG.objects.get(id=gameID)
+                        Jogo.objects.create(
+                            criadoPor=request.user,
+                            nome=jogo_bgg.name,
+                            anoLancamento=jogo_bgg.yearpublished,
+                            bggId=jogo_bgg.id,
+                            isExpansao=jogo_bgg.is_expansion,
+                        )
+                    except JogoBGG.DoesNotExist:
+                        print(f"Game with BGG ID {gameID} not found in JogoBGG table.")
+
+        with transaction.atomic():
+            for player_name in saved_players:
+                if not Jogador.objects.filter(nome=player_name).exists():
+                    try:
+                        Jogador.objects.create(criadoPor=request.user, nome=player_name)
+                    except Exception as e:
+                        print(f"Error creating player {player_name}: {e}")
+
+        with transaction.atomic():
+            for location_name in saved_locations:
+                if not Local.objects.filter(nome=location_name).exists():
+                    try:
+                        Local.objects.create(criadoPor=request.user, nome=location_name)
+                    except Exception as e:
+                        print(f"Error creating location {location_name}: {e}")
+
+        with transaction.atomic():
+            for play in plays:
+                try:
+                    jogo_ids = []
+                    for gameId in play["games"].split(" "):
+                        jogo = Jogo.objects.filter(bggId=gameId).first()
+                        if jogo:
+                            jogo_ids.append(jogo.id)
+                        else:
+                            raise Exception(f"Game with BGG ID {gameId} not found.")
+                    local = Local.objects.filter(nome=play["location"]).first()
+                    print(f"Creating partida with local {local} and jogos {jogo_ids}")
+                    partida = Partida.objects.create(
+                        criadoPor=request.user,
+                        local=local,
+                        dataPartida=play["date"],
+                    )
+                    partida.jogos.set(jogo_ids)
+                    for player in play["players"]:
+                        # if rank==0, calculate rank based on score
+                        if player["rank"] == "0":
+                            player["rank"] = 1 + sum(
+                                1
+                                for p in play["players"]
+                                if p["score"] > player["score"]
+                            )
+                        jogador = Jogador.objects.filter(nome=player["name"]).first()
+                        if jogador:
+                            Classificacao.objects.create(
+                                criadoPor=request.user,
+                                partida=partida,
+                                jogador=jogador,
+                                pontos=player["score"],
+                                posicao=player["rank"],
+                            )
+                        else:
+                            raise Exception(
+                                f"Player with name {player['name']} not found."
+                            )
+                except Exception as e:
+                    print(f"Error processing play: {e}")
+
+        return Response(
+            {"message": f"Arquivo processado com sucesso."},
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        print(f"Error processing file: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -33,6 +33,7 @@ urlpatterns = [
         views.import_bbg_games_file,
         name="bgg-jogo-create",
     ),
+    path("bgg-plays/", views.import_bgg_plays_file, name="bgg-plays-import"),
     path("bgg-jogos/", views.JogoBggSearch.as_view({"get": "list"}), name="bgg-jogos"),
     path("locais/", views.LocalListView.as_view(), name="local-list"),
     path("local/create/", views.LocalCreateView.as_view(), name="local-create"),

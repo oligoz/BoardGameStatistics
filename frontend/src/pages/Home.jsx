@@ -52,11 +52,11 @@ function Home() {
   return (
     <div className="p-4">
       <section>
-        <h1>Bem-vindo ao Board Game Statistics App!</h1>
+        <h1>Bem-vindo ao Board Game Statistics!</h1>
         <p>
-          O Board Game Statistics App é uma ferramenta para gerenciar e
-          acompanhar estatísticas de jogos de tabuleiro, incluindo jogadores,
-          locais, jogos e partidas.
+          O Board Game Statistics é uma ferramenta para gerenciar e acompanhar
+          estatísticas de jogos de tabuleiro, incluindo jogadores, locais, jogos
+          e partidas.
         </p>
         <p>
           Com este aplicativo, você pode visualizar informações detalhadas sobre
@@ -69,13 +69,13 @@ function Home() {
             O sistema de pontuação funciona com base na colocação final de cada
             jogador em cada partida. Em vez de contar apenas vitórias, ele
             distribui pontos positivos para quem termina nas primeiras posições
-            e pontos negativos para quem termina nas últimas.{" "}
+            e pontos negativos para quem termina nas últimas.
           </p>
           <p className="m-0">
-            Quando a partida tem um número ímpar de posições, a posição central
+            Quando a partida tem um número ímpar de jogadores, a posição central
             vale 0. Quem fica acima dela ganha pontos, e quem fica abaixo perde
-            pontos. Por exemplo, em uma partida com 5 posições, a pontuação fica
-            assim:
+            pontos. Por exemplo, em uma partida com 5 jogadores, a pontuação
+            fica assim:
           </p>
           <CTable className="w-auto" color="dark" align="middle">
             <CTableHead>
@@ -108,11 +108,10 @@ function Home() {
             </CTableBody>
           </CTable>
           <p className="m-0">
-            Quando a partida tem um número par de posições, não existe posição
+            Quando a partida tem um número par de jogadores, não existe posição
             neutra. As posições da metade superior recebem pontos positivos e as
             da metade inferior recebem pontos negativos. Por exemplo, em uma
-            partida com 4 posições, a pontuação fica: 1º lugar = +2, 2º lugar =
-            +1, 3º lugar = -1 e 4º lugar = -2.{" "}
+            partida com 4 jogadores, a pontuação fica:
           </p>
           <CTable className="w-auto" color="dark" align="middle">
             <CTableHead>
@@ -140,6 +139,13 @@ function Home() {
               </CTableRow>
             </CTableBody>
           </CTable>
+          <p>
+            Em ambos os casos, se houver jogadores empatados em uma posição,
+            eles recebem a média dos pontos das posições que ocupam. Por
+            exemplo, se em uma partida com 5 jogadores, dois jogadores
+            terminarem empatados na segunda posição, eles receberão a média dos
+            pontos do 2º e 3º lugar, ou seja, (1 + 0) / 2 = +0.5 pontos cada.
+          </p>
           <p>
             A classificação final de cada jogador é a soma de todos esses pontos
             nas partidas consideradas pelos filtros selecionados.

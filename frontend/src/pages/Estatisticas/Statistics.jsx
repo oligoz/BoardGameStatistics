@@ -296,25 +296,75 @@ function Statistics() {
       );
 
       // const numJogadores = partida.jogadores.length;
-      partida.classificacoes.forEach((classificacao) => {
-        // const pontos = (numJogadores - classificacao.posicao + 1) * 10;
-        let pontos;
-        const jogadorIndex = classificacaoAux.findIndex(
+      // partida.classificacoes.forEach((classificacao) => {
+      //   // const pontos = (numJogadores - classificacao.posicao + 1) * 10;
+      //   let pontos;
+      //   const jogadorIndex = classificacaoAux.findIndex(
+      //     (j) => j.jogador === classificacao.nome,
+      //   );
+      //   if (jogadorIndex !== -1) {
+      //     if (numPosicoes % 2 === 0) {
+      //       if (classificacao.posicao <= numPosicoes / 2) {
+      //         pontos = numPosicoes / 2 - classificacao.posicao + 1;
+      //       } else {
+      //         pontos = numPosicoes / 2 - classificacao.posicao;
+      //       }
+      //     } else {
+      //       pontos = (numPosicoes + 1) / 2 - classificacao.posicao;
+      //     }
+      //     classificacaoAux[jogadorIndex].pontos += pontos;
+      //   }
+      // });
+
+      const numJogadores = partida.jogadores.length;
+      const partidaClassificacoes = partida.classificacoes.sort(
+        (a, b) => a.posicao - b.posicao,
+      );
+
+      let index = 0;
+      while (index < partidaClassificacoes.length) {
+        const classificacao = partidaClassificacoes[index];
+        let jogadorIndex = classificacaoAux.findIndex(
           (j) => j.jogador === classificacao.nome,
         );
-        if (jogadorIndex !== -1) {
-          if (numPosicoes % 2 === 0) {
-            if (classificacao.posicao <= numPosicoes / 2) {
-              pontos = numPosicoes / 2 - classificacao.posicao + 1;
-            } else {
-              pontos = numPosicoes / 2 - classificacao.posicao;
-            }
+        let pontos;
+        if (numJogadores % 2 === 0) {
+          if (classificacao.posicao <= numJogadores / 2) {
+            pontos = numJogadores / 2 - classificacao.posicao + 1;
           } else {
-            pontos = (numPosicoes + 1) / 2 - classificacao.posicao;
+            pontos = numJogadores / 2 - classificacao.posicao;
           }
+        } else {
+          pontos = (numJogadores + 1) / 2 - classificacao.posicao;
+        }
+        if (
+          classificacao.posicao == partidaClassificacoes[index + 1]?.posicao
+        ) {
+          const numEmpatados = partidaClassificacoes.filter(
+            (c) => c.posicao === classificacao.posicao,
+          ).length;
+          pontos = Array.from(
+            { length: numEmpatados },
+            (v, i) => pontos - i,
+          ).reduce((total, atual) => total + atual, 0);
+          pontos = pontos / numEmpatados;
+          for (let i = 1; i < numEmpatados; i++) {
+            const proximoClassificado = partidaClassificacoes[index + i];
+            const proximoJogadorIndex = classificacaoAux.findIndex(
+              (j) => j.jogador === proximoClassificado?.nome,
+            );
+            if (proximoJogadorIndex !== -1) {
+              classificacaoAux[proximoJogadorIndex].pontos += pontos;
+            }
+          }
+          index += numEmpatados - 1;
+        }
+        if (jogadorIndex !== -1) {
           classificacaoAux[jogadorIndex].pontos += pontos;
         }
-      });
+
+        index += 1;
+      }
     });
     setClassificacao(classificacaoAux);
   }, [filteredPartidas, selectedJogadores, jogadoresOptions]);
@@ -614,6 +664,11 @@ function Statistics() {
         {showGames && (
           <>
             <h2 className="mt-3">Partidas</h2>
+            {filteredPartidas.length === 1 ? (
+              <p>1 partida encontrada</p>
+            ) : (
+              <p>{filteredPartidas.length} partidas encontradas</p>
+            )}
             <CTable
               color="dark"
               align="middle"
@@ -651,7 +706,9 @@ function Statistics() {
                             .sort((a, b) => a.posicao - b.posicao)
                             .map((classificacao, index) => (
                               <CTableRow key={index}>
-                                <CTableDataCell>{index + 1}º</CTableDataCell>
+                                <CTableDataCell>
+                                  {classificacao.posicao}º
+                                </CTableDataCell>
                                 <CTableDataCell>
                                   {classificacao.nome}
                                 </CTableDataCell>

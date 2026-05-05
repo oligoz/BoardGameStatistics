@@ -24,7 +24,7 @@ class JogoAdmin(admin.ModelAdmin):
 
 class JogoBGGAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "yearpublished", "is_expansion")
-    search_fields = ("name",)
+    search_fields = ("name", "id")
 
 
 class LocalAdmin(admin.ModelAdmin):
