@@ -262,9 +262,7 @@ function Statistics() {
   }, [selectedJogadores, selectedJogos, selectedLocais, dateStart, dateEnd]);
 
   useEffect(() => {
-    console.log("fora", filteredPartidas);
     if (filteredPartidas) {
-      console.log("dentro", filteredPartidas);
       let classificacaoAux = [];
       filteredPartidas.forEach((partida) => {
         partida.jogadores.forEach((jogador) => {
