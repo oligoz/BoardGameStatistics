@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { CSpinner, CButton, CFormInput } from "@coreui/react";
 import "../../styles/Form.css";
+import useJogadoresStore from "../../store/jogadoresStore";
 
 function FormJogador({ type, jogador }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState(null);
   const navigate = useNavigate();
+  const clearJogadores = useJogadoresStore((state) => state.clearJogadores);
 
   const handleCreateJogador = (e) => {
     setLoading(true);
@@ -22,6 +24,7 @@ function FormJogador({ type, jogador }) {
     api
       .patch("api/jogador/update/" + jogador.id + "/", { nome })
       .then((res) => {
+        clearJogadores();
         navigate("/jogadores");
       })
       .catch((error) => setErrors(error.response.data.nome))
@@ -32,6 +35,7 @@ function FormJogador({ type, jogador }) {
     api
       .post("api/jogador/create/", { nome })
       .then((res) => {
+        clearJogadores();
         navigate("/jogadores");
       })
       .catch((error) => setErrors(error.response.data.nome))
@@ -43,7 +47,10 @@ function FormJogador({ type, jogador }) {
       setLoading(true);
       api
         .delete("api/jogador/delete/" + id + "/")
-        .then((res) => navigate("/jogadores"))
+        .then((res) => {
+          clearJogadores();
+          navigate("/jogadores");
+        })
         .catch((error) => setErrors(error.response.data.msg))
         .finally(() => setLoading(false));
     }

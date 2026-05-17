@@ -11,6 +11,7 @@ import {
   CCardTitle,
 } from "@coreui/react";
 import { useNavigate } from "react-router-dom";
+import useJogosStore from "../../store/jogosStore";
 
 function DeleteJogo() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ function DeleteJogo() {
   const [partidas, setPartidas] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const clearJogos = useJogosStore((state) => state.clearJogos);
 
   useEffect(() => {
     centerContent();
@@ -46,7 +48,10 @@ function DeleteJogo() {
       setLoading(true);
       api
         .delete("api/jogo/delete/" + id + "/")
-        .then((res) => navigate("/jogos"))
+        .then((res) => {
+          clearJogos();
+          navigate("/jogos");
+        })
         .catch((error) => alert(error.response.data.msg))
         .finally(() => setLoading(false));
     }

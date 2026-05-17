@@ -11,17 +11,27 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
+  CSpinner,
 } from "@coreui/react";
+import useJogadoresStore from "../../store/jogadoresStore";
+import useJogosStore from "../../store/jogosStore";
+import useLocaisStore from "../../store/locaisStore";
+import usePartidasStore from "../../store/partidasStore";
 
 function Statistics() {
-  const [partidas, setPartidas] = useState([]);
-  const [jogadores, setJogadores] = useState([]);
-  const [jogos, setJogos] = useState([]);
-  const [locais, setLocais] = useState([]);
+  const partidas = usePartidasStore((state) => state.partidas);
+  const jogadores = useJogadoresStore((state) => state.jogadores);
+  const jogos = useJogosStore((state) => state.jogos);
+  const locais = useLocaisStore((state) => state.locais);
+  const fetchPartidas = usePartidasStore((state) => state.fetchPartidas);
+  const fetchJogadores = useJogadoresStore((state) => state.fetchJogadores);
+  const fetchJogos = useJogosStore((state) => state.fetchJogos);
+  const fetchLocais = useLocaisStore((state) => state.fetchLocais);
+
   const [jogadoresOptions, setJogadoresOptions] = useState([]);
   const [jogosOptions, setJogosOptions] = useState([]);
   const [locaisOptions, setLocaisOptions] = useState([]);
-  const [filteredPartidas, setFilteredPartidas] = useState([]);
+  const [filteredPartidas, setFilteredPartidas] = useState(null);
   const [selectedJogadores, setSelectedJogadores] = useState([]);
   const [selectedJogos, setSelectedJogos] = useState([]);
   const [selectedLocais, setSelectedLocais] = useState([]);
@@ -32,101 +42,83 @@ function Statistics() {
   const [custom, setCustom] = useState(false);
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api
-      .get("api/partidas/")
-      .then((res) => res.data)
-      .then((data) => {
-        if (data.length > 0) {
-          let earliestDate = new Date(data[0].dataPartida + "T00:00:00");
-          data.forEach((partida) => {
-            const partidaDate = new Date(partida.dataPartida + "T00:00:00");
-            if (partidaDate < earliestDate) {
-              earliestDate = partidaDate;
-            }
-          });
-          setFirstDate(earliestDate);
-          const todayDate = new Date();
-          const todayDay = todayDate.getDate();
-          const todayMonth = todayDate.getMonth();
-          const todayYear = todayDate.getFullYear();
-          setToday(
-            String(todayYear) +
-              "-" +
-              String(todayMonth + 1).padStart(2, "0") +
-              "-" +
-              String(todayDay).padStart(2, "0"),
-          );
-          setDateStart(earliestDate.toISOString().split("T")[0]);
-          setDateEnd(
-            String(todayYear) +
-              "-" +
-              String(todayMonth + 1).padStart(2, "0") +
-              "-" +
-              String(todayDay).padStart(2, "0"),
-          );
-        }
-        setPartidas(data);
-        setFilteredPartidas(data);
-      });
+    setLoading(true);
+    if (!partidas) {
+      fetchPartidas();
+    }
+    if (!jogadores) {
+      fetchJogadores();
+    }
+    if (!jogos) {
+      fetchJogos();
+    }
+    if (!locais) {
+      fetchLocais();
+    }
   }, []);
 
   useEffect(() => {
-    let allJogadores = [];
-    let allJogos = [];
-    let allLocais = [];
-    partidas.forEach((partida) => {
-      partida.jogadores.forEach((jogador) => {
-        let jogadorAux = { jogador: jogador };
-        if (!allJogadores.some((j) => j.jogador === jogadorAux.jogador)) {
-          allJogadores.push(jogadorAux);
+    if (partidas && jogadores && jogos && locais) {
+      let earliestDate = new Date(partidas[0].dataPartida + "T00:00:00");
+      partidas.forEach((partida) => {
+        const partidaDate = new Date(partida.dataPartida + "T00:00:00");
+        if (partidaDate < earliestDate) {
+          earliestDate = partidaDate;
         }
       });
-
-      partida.jogos.forEach((jogo) => {
-        let jogoAux = { jogo: jogo };
-        if (!allJogos.some((j) => j.jogo === jogoAux.jogo)) {
-          allJogos.push(jogoAux);
-        }
-      });
-
-      let localAux = { local: partida.local };
-      if (!allLocais.some((l) => l.local === localAux.local)) {
-        allLocais.push(localAux);
-      }
-    });
-    setJogadores(allJogadores);
-    setJogadoresOptions(allJogadores);
-
-    setJogos(allJogos);
-    setJogosOptions(allJogos);
-
-    setLocais(allLocais);
-    setLocaisOptions(allLocais);
-  }, [partidas]);
+      setFirstDate(earliestDate);
+      const todayDate = new Date();
+      const todayDay = todayDate.getDate();
+      const todayMonth = todayDate.getMonth();
+      const todayYear = todayDate.getFullYear();
+      setToday(
+        String(todayYear) +
+          "-" +
+          String(todayMonth + 1).padStart(2, "0") +
+          "-" +
+          String(todayDay).padStart(2, "0"),
+      );
+      setDateStart(earliestDate.toISOString().split("T")[0]);
+      setDateEnd(
+        String(todayYear) +
+          "-" +
+          String(todayMonth + 1).padStart(2, "0") +
+          "-" +
+          String(todayDay).padStart(2, "0"),
+      );
+      setFilteredPartidas(partidas);
+      setJogadoresOptions(jogadores);
+      setJogosOptions(jogos);
+      setLocaisOptions(locais);
+    }
+  }, [partidas, jogadores, jogos, locais]);
 
   useEffect(() => {
-    const newJogadoresOptions = jogadores.filter((jogador) => {
-      return partidas.some((partida) => {
-        return (
-          [jogador.jogador, ...selectedJogadores].every((j) =>
-            partida.jogadores.includes(j),
-          ) &&
-          (selectedJogos.length === 0 ||
-            selectedJogos.every((jogo) => partida.jogos.includes(jogo))) &&
-          (selectedLocais.length === 0 ||
-            selectedLocais.includes(partida.local)) &&
-          (dateStart === "" ||
-            dateEnd === "" ||
-            (new Date(partida.dataPartida + "T00:00:00") >=
-              new Date(dateStart + "T00:00:00") &&
-              new Date(partida.dataPartida + "T00:00:00") <=
-                new Date(dateEnd + "T00:00:00")))
-        );
+    if (jogadores && partidas && dateStart && dateEnd) {
+      const newJogadoresOptions = jogadores.filter((jogador) => {
+        return partidas.some((partida) => {
+          return (
+            [jogador.nome, ...selectedJogadores].every((j) =>
+              partida.jogadores.includes(j),
+            ) &&
+            (selectedJogos.length === 0 ||
+              selectedJogos.every((jogo) => partida.jogos.includes(jogo))) &&
+            (selectedLocais.length === 0 ||
+              selectedLocais.includes(partida.local)) &&
+            (dateStart === "" ||
+              dateEnd === "" ||
+              (new Date(partida.dataPartida + "T00:00:00") >=
+                new Date(dateStart + "T00:00:00") &&
+                new Date(partida.dataPartida + "T00:00:00") <=
+                  new Date(dateEnd + "T00:00:00")))
+          );
+        });
       });
-    });
-    setJogadoresOptions(newJogadoresOptions);
+      setJogadoresOptions(newJogadoresOptions);
+    }
   }, [
     partidas,
     jogadores,
@@ -138,28 +130,30 @@ function Statistics() {
   ]);
 
   useEffect(() => {
-    const newJogosOptions = jogos.filter((jogo) => {
-      return partidas.some((partida) => {
-        return (
-          [jogo.jogo, ...selectedJogos].every((j) =>
-            partida.jogos.includes(j),
-          ) &&
-          (selectedJogadores.length === 0 ||
-            selectedJogadores.every((jogador) =>
-              partida.jogadores.includes(jogador),
-            )) &&
-          (selectedLocais.length === 0 ||
-            selectedLocais.includes(partida.local)) &&
-          (dateStart === "" ||
-            dateEnd === "" ||
-            (new Date(partida.dataPartida + "T00:00:00") >=
-              new Date(dateStart + "T00:00:00") &&
-              new Date(partida.dataPartida + "T00:00:00") <=
-                new Date(dateEnd + "T00:00:00")))
-        );
+    if (jogos && partidas && dateStart && dateEnd) {
+      const newJogosOptions = jogos.filter((jogo) => {
+        return partidas.some((partida) => {
+          return (
+            [jogo.nome, ...selectedJogos].every((j) =>
+              partida.jogos.includes(j),
+            ) &&
+            (selectedJogadores.length === 0 ||
+              selectedJogadores.every((jogador) =>
+                partida.jogadores.includes(jogador),
+              )) &&
+            (selectedLocais.length === 0 ||
+              selectedLocais.includes(partida.local)) &&
+            (dateStart === "" ||
+              dateEnd === "" ||
+              (new Date(partida.dataPartida + "T00:00:00") >=
+                new Date(dateStart + "T00:00:00") &&
+                new Date(partida.dataPartida + "T00:00:00") <=
+                  new Date(dateEnd + "T00:00:00")))
+          );
+        });
       });
-    });
-    setJogosOptions(newJogosOptions);
+      setJogosOptions(newJogosOptions);
+    }
   }, [
     partidas,
     jogos,
@@ -171,26 +165,28 @@ function Statistics() {
   ]);
 
   useEffect(() => {
-    const newLocaisOptions = locais.filter((local) => {
-      return partidas.some((partida) => {
-        return (
-          partida.local === local.local &&
-          (selectedJogadores.length === 0 ||
-            selectedJogadores.every((jogador) =>
-              partida.jogadores.includes(jogador),
-            )) &&
-          (selectedJogos.length === 0 ||
-            selectedJogos.every((jogo) => partida.jogos.includes(jogo))) &&
-          (dateStart === "" ||
-            dateEnd === "" ||
-            (new Date(partida.dataPartida + "T00:00:00") >=
-              new Date(dateStart + "T00:00:00") &&
-              new Date(partida.dataPartida + "T00:00:00") <=
-                new Date(dateEnd + "T00:00:00")))
-        );
+    if (locais && partidas && dateStart && dateEnd) {
+      const newLocaisOptions = locais.filter((local) => {
+        return partidas.some((partida) => {
+          return (
+            partida.local === local.nome &&
+            (selectedJogadores.length === 0 ||
+              selectedJogadores.every((jogador) =>
+                partida.jogadores.includes(jogador),
+              )) &&
+            (selectedJogos.length === 0 ||
+              selectedJogos.every((jogo) => partida.jogos.includes(jogo))) &&
+            (dateStart === "" ||
+              dateEnd === "" ||
+              (new Date(partida.dataPartida + "T00:00:00") >=
+                new Date(dateStart + "T00:00:00") &&
+                new Date(partida.dataPartida + "T00:00:00") <=
+                  new Date(dateEnd + "T00:00:00")))
+          );
+        });
       });
-    });
-    setLocaisOptions(newLocaisOptions);
+      setLocaisOptions(newLocaisOptions);
+    }
   }, [
     partidas,
     locais,
@@ -204,7 +200,7 @@ function Statistics() {
   const filterJogadores = (e) => {
     let auxJogadores = [];
     e.forEach((option) => {
-      auxJogadores.push(option.jogador);
+      auxJogadores.push(option.nome);
     });
     setSelectedJogadores(auxJogadores);
   };
@@ -212,7 +208,7 @@ function Statistics() {
   const filterJogos = (e) => {
     let auxJogos = [];
     e.forEach((option) => {
-      auxJogos.push(option.jogo);
+      auxJogos.push(option.nome);
     });
     setSelectedJogos(auxJogos);
   };
@@ -220,153 +216,151 @@ function Statistics() {
   const filterLocais = (e) => {
     let auxLocais = [];
     e.forEach((option) => {
-      auxLocais.push(option.local);
+      auxLocais.push(option.nome);
     });
     setSelectedLocais(auxLocais);
   };
 
   useEffect(() => {
-    const filtered = partidas
-      .filter((partida) => {
-        if (selectedJogadores.length !== 0) {
-          return selectedJogadores.every((jogador) =>
-            partida.jogadores.includes(jogador),
-          );
-        } else {
-          return true;
-        }
-      })
-      .filter((partida) => {
-        if (selectedJogos.length !== 0) {
-          return selectedJogos.every((jogo) => partida.jogos.includes(jogo));
-        } else {
-          return true;
-        }
-      })
-      .filter((partida) => {
-        if (selectedLocais.length !== 0) {
-          return selectedLocais.includes(partida.local);
-        } else {
-          return true;
-        }
-      })
-      .filter((partida) => {
-        if (!dateStart || !dateEnd) {
-          return true;
-        }
+    if (partidas && dateStart && dateEnd) {
+      const filtered = partidas
+        .filter((partida) => {
+          if (selectedJogadores.length !== 0) {
+            return selectedJogadores.every((jogador) =>
+              partida.jogadores.includes(jogador),
+            );
+          } else {
+            return true;
+          }
+        })
+        .filter((partida) => {
+          if (selectedJogos.length !== 0) {
+            return selectedJogos.every((jogo) => partida.jogos.includes(jogo));
+          } else {
+            return true;
+          }
+        })
+        .filter((partida) => {
+          if (selectedLocais.length !== 0) {
+            return selectedLocais.includes(partida.local);
+          } else {
+            return true;
+          }
+        })
+        .filter((partida) => {
+          if (!dateStart || !dateEnd) {
+            return true;
+          }
 
-        const partidaDate = new Date(partida.dataPartida + "T00:00:00");
-        const dataInicioInput = new Date(dateStart + "T00:00:00");
-        const dataFimInput = new Date(dateEnd + "T00:00:00");
-        return partidaDate >= dataInicioInput && partidaDate <= dataFimInput;
-      });
-    setFilteredPartidas(filtered);
-  }, [
-    partidas,
-    selectedJogadores,
-    selectedJogos,
-    selectedLocais,
-    dateStart,
-    dateEnd,
-  ]);
+          const partidaDate = new Date(partida.dataPartida + "T00:00:00");
+          const dataInicioInput = new Date(dateStart + "T00:00:00");
+          const dataFimInput = new Date(dateEnd + "T00:00:00");
+          return partidaDate >= dataInicioInput && partidaDate <= dataFimInput;
+        });
+      setFilteredPartidas(filtered);
+    }
+  }, [selectedJogadores, selectedJogos, selectedLocais, dateStart, dateEnd]);
 
   useEffect(() => {
-    let classificacaoAux = [];
-    if (selectedJogadores.length > 0) {
-      selectedJogadores.forEach((j) => {
-        classificacaoAux.push({ jogador: j, pontos: 0 });
-      });
-    } else {
-      jogadoresOptions.forEach((jogador) => {
-        classificacaoAux.push({
-          jogador: jogador.jogador,
-          pontos: 0,
+    console.log("fora", filteredPartidas);
+    if (filteredPartidas) {
+      console.log("dentro", filteredPartidas);
+      let classificacaoAux = [];
+      filteredPartidas.forEach((partida) => {
+        partida.jogadores.forEach((jogador) => {
+          if (!classificacaoAux.some((c) => c.jogador === jogador)) {
+            classificacaoAux.push({
+              jogador: jogador,
+              pontos: 0,
+            });
+          }
         });
       });
-    }
 
-    filteredPartidas.forEach((partida) => {
-      const numPosicoes = Math.max(
-        ...partida.classificacoes.reduce((acc, classificacao) => {
-          if (!acc.includes(classificacao.posicao)) {
-            acc.push(classificacao.posicao);
-          }
-          return acc;
-        }, []),
-      );
-
-      // const numJogadores = partida.jogadores.length;
-      // partida.classificacoes.forEach((classificacao) => {
-      //   // const pontos = (numJogadores - classificacao.posicao + 1) * 10;
-      //   let pontos;
-      //   const jogadorIndex = classificacaoAux.findIndex(
-      //     (j) => j.jogador === classificacao.nome,
-      //   );
-      //   if (jogadorIndex !== -1) {
-      //     if (numPosicoes % 2 === 0) {
-      //       if (classificacao.posicao <= numPosicoes / 2) {
-      //         pontos = numPosicoes / 2 - classificacao.posicao + 1;
-      //       } else {
-      //         pontos = numPosicoes / 2 - classificacao.posicao;
-      //       }
-      //     } else {
-      //       pontos = (numPosicoes + 1) / 2 - classificacao.posicao;
-      //     }
-      //     classificacaoAux[jogadorIndex].pontos += pontos;
-      //   }
-      // });
-
-      const numJogadores = partida.jogadores.length;
-      const partidaClassificacoes = partida.classificacoes.sort(
-        (a, b) => a.posicao - b.posicao,
-      );
-
-      let index = 0;
-      while (index < partidaClassificacoes.length) {
-        const classificacao = partidaClassificacoes[index];
-        let jogadorIndex = classificacaoAux.findIndex(
-          (j) => j.jogador === classificacao.nome,
-        );
-        let pontos;
-        if (numJogadores % 2 === 0) {
-          if (classificacao.posicao <= numJogadores / 2) {
-            pontos = numJogadores / 2 - classificacao.posicao + 1;
-          } else {
-            pontos = numJogadores / 2 - classificacao.posicao;
-          }
-        } else {
-          pontos = (numJogadores + 1) / 2 - classificacao.posicao;
-        }
-        if (
-          classificacao.posicao == partidaClassificacoes[index + 1]?.posicao
-        ) {
-          const numEmpatados = partidaClassificacoes.filter(
-            (c) => c.posicao === classificacao.posicao,
-          ).length;
-          pontos = Array.from(
-            { length: numEmpatados },
-            (v, i) => pontos - i,
-          ).reduce((total, atual) => total + atual, 0);
-          pontos = pontos / numEmpatados;
-          for (let i = 1; i < numEmpatados; i++) {
-            const proximoClassificado = partidaClassificacoes[index + i];
-            const proximoJogadorIndex = classificacaoAux.findIndex(
-              (j) => j.jogador === proximoClassificado?.nome,
-            );
-            if (proximoJogadorIndex !== -1) {
-              classificacaoAux[proximoJogadorIndex].pontos += pontos;
+      filteredPartidas.forEach((partida) => {
+        const numPosicoes = Math.max(
+          ...partida.classificacoes.reduce((acc, classificacao) => {
+            if (!acc.includes(classificacao.posicao)) {
+              acc.push(classificacao.posicao);
             }
-          }
-          index += numEmpatados - 1;
-        }
-        if (jogadorIndex !== -1) {
-          classificacaoAux[jogadorIndex].pontos += pontos;
-        }
+            return acc;
+          }, []),
+        );
 
-        index += 1;
-      }
-    });
-    setClassificacao(classificacaoAux);
+        // const numJogadores = partida.jogadores.length;
+        // partida.classificacoes.forEach((classificacao) => {
+        //   // const pontos = (numJogadores - classificacao.posicao + 1) * 10;
+        //   let pontos;
+        //   const jogadorIndex = classificacaoAux.findIndex(
+        //     (j) => j.jogador === classificacao.nome,
+        //   );
+        //   if (jogadorIndex !== -1) {
+        //     if (numPosicoes % 2 === 0) {
+        //       if (classificacao.posicao <= numPosicoes / 2) {
+        //         pontos = numPosicoes / 2 - classificacao.posicao + 1;
+        //       } else {
+        //         pontos = numPosicoes / 2 - classificacao.posicao;
+        //       }
+        //     } else {
+        //       pontos = (numPosicoes + 1) / 2 - classificacao.posicao;
+        //     }
+        //     classificacaoAux[jogadorIndex].pontos += pontos;
+        //   }
+        // });
+
+        const numJogadores = partida.jogadores.length;
+        const partidaClassificacoes = partida.classificacoes.sort(
+          (a, b) => a.posicao - b.posicao,
+        );
+
+        let index = 0;
+        while (index < partidaClassificacoes.length) {
+          const classificacao = partidaClassificacoes[index];
+          let jogadorIndex = classificacaoAux.findIndex(
+            (j) => j.jogador === classificacao.nome,
+          );
+          let pontos;
+          if (numJogadores % 2 === 0) {
+            if (classificacao.posicao <= numJogadores / 2) {
+              pontos = numJogadores / 2 - classificacao.posicao + 1;
+            } else {
+              pontos = numJogadores / 2 - classificacao.posicao;
+            }
+          } else {
+            pontos = (numJogadores + 1) / 2 - classificacao.posicao;
+          }
+          if (
+            classificacao.posicao == partidaClassificacoes[index + 1]?.posicao
+          ) {
+            const numEmpatados = partidaClassificacoes.filter(
+              (c) => c.posicao === classificacao.posicao,
+            ).length;
+            pontos = Array.from(
+              { length: numEmpatados },
+              (v, i) => pontos - i,
+            ).reduce((total, atual) => total + atual, 0);
+            pontos = pontos / numEmpatados;
+            for (let i = 1; i < numEmpatados; i++) {
+              const proximoClassificado = partidaClassificacoes[index + i];
+              const proximoJogadorIndex = classificacaoAux.findIndex(
+                (j) => j.jogador === proximoClassificado?.nome,
+              );
+              if (proximoJogadorIndex !== -1) {
+                classificacaoAux[proximoJogadorIndex].pontos += pontos;
+              }
+            }
+            index += numEmpatados - 1;
+          }
+          if (jogadorIndex !== -1) {
+            classificacaoAux[jogadorIndex].pontos += pontos;
+          }
+
+          index += 1;
+        }
+      });
+      setClassificacao(classificacaoAux);
+      setLoading(false);
+    }
   }, [filteredPartidas, selectedJogadores, jogadoresOptions]);
 
   const changeDateSelection = (e) => {
@@ -450,8 +444,8 @@ function Statistics() {
             }}
             isMulti
             options={jogadoresOptions}
-            getOptionLabel={(option) => option.jogador}
-            getOptionValue={(option) => option.jogador}
+            getOptionLabel={(option) => option.nome}
+            getOptionValue={(option) => option.nome}
             onChange={filterJogadores}
           />
         </CCol>
@@ -503,8 +497,8 @@ function Statistics() {
             }}
             isMulti
             options={jogosOptions}
-            getOptionLabel={(option) => option.jogo}
-            getOptionValue={(option) => option.jogo}
+            getOptionLabel={(option) => option.nome}
+            getOptionValue={(option) => option.nome}
             onChange={filterJogos}
           />
         </CCol>
@@ -556,8 +550,8 @@ function Statistics() {
             }}
             isMulti
             options={locaisOptions}
-            getOptionLabel={(option) => option.local}
-            getOptionValue={(option) => option.local}
+            getOptionLabel={(option) => option.nome}
+            getOptionValue={(option) => option.nome}
             onChange={filterLocais}
           />
         </CCol>
@@ -631,33 +625,39 @@ function Statistics() {
         </CCol>
       </CRow>
       <div className="p-3 bg-darkgray rounded shadow">
-        <CTable
-          color="dark"
-          align="middle"
-          className="text-white bg-darkgray"
-          hover
-        >
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell scope="col">Posição</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Nome</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Pontos</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {classificacao
-              ? classificacao
-                  .sort((a, b) => b.pontos - a.pontos)
-                  .map((c, index) => (
-                    <CTableRow key={c.jogador}>
-                      <CTableDataCell>{index + 1}º</CTableDataCell>
-                      <CTableDataCell>{c.jogador}</CTableDataCell>
-                      <CTableDataCell>{c.pontos}</CTableDataCell>
-                    </CTableRow>
-                  ))
-              : null}
-          </CTableBody>
-        </CTable>
+        {loading ? (
+          <div className="d-flex justify-content-center">
+            <CSpinner />
+          </div>
+        ) : classificacao.length === 0 ? (
+          <h2 className="text-center">Nenhuma partida encontrada.</h2>
+        ) : (
+          <CTable
+            color="dark"
+            align="middle"
+            className="text-white bg-darkgray"
+            hover
+          >
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell scope="col">Posição</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Nome</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Pontos</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
+              {classificacao
+                .sort((a, b) => b.pontos - a.pontos)
+                .map((c, index) => (
+                  <CTableRow key={c.jogador}>
+                    <CTableDataCell>{index + 1}º</CTableDataCell>
+                    <CTableDataCell>{c.jogador}</CTableDataCell>
+                    <CTableDataCell>{c.pontos}</CTableDataCell>
+                  </CTableRow>
+                ))}
+            </CTableBody>
+          </CTable>
+        )}
         <CButton color="secondary" onClick={() => setShowGames(!showGames)}>
           {showGames ? "Ocultar Partidas" : "Mostrar Partidas"}
         </CButton>

@@ -1,23 +1,24 @@
 import { useState, useEffect } from "react";
-import { CButton } from "@coreui/react";
+import { CButton, CSpinner } from "@coreui/react";
 import api from "../../api";
 import LocalCard from "../../components/cards/LocalCard";
 import useUserStore from "../../store/userStore";
 import { useNavigate } from "react-router-dom";
+import useLocaisStore from "../../store/locaisStore";
 
 function ListLocais() {
   const user = useUserStore((state) => state.user);
-  const [locais, setLocais] = useState([]);
+  // const [locais, setLocais] = useState(null);
+  // const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const fetchLocais = useLocaisStore((state) => state.fetchLocais);
+  const locais = useLocaisStore((state) => state.locais);
+  const loading = useLocaisStore((state) => state.loading);
 
   const getLocais = () => {
-    api
-      .get("/api/locais/")
-      .then((res) => res.data)
-      .then((data) => {
-        setLocais(data);
-      })
-      .catch((error) => alert(error));
+    if (!locais) {
+      fetchLocais();
+    }
   };
 
   useEffect(() => {
@@ -28,14 +29,20 @@ function ListLocais() {
     <div className="p-4">
       <h1>Lista de Locais</h1>
       <div className="border rounded mt-3 mb-3 p-3 d-flex flex-wrap gap-3 bg-dark justify-content-center">
-        {locais.map((local) => (
-          <LocalCard
-            key={local.id}
-            id={local.id}
-            nome={local.nome}
-            handleClick={() => navigate("/local/update/" + local.id)}
-          />
-        ))}
+        {loading ? (
+          <CSpinner />
+        ) : locais && locais.length > 0 ? (
+          locais.map((local) => (
+            <LocalCard
+              key={local.id}
+              id={local.id}
+              nome={local.nome}
+              handleClick={() => navigate("/local/update/" + local.id)}
+            />
+          ))
+        ) : (
+          <h3>Nenhum local encontrado.</h3>
+        )}
       </div>
       {user !== null && user.id !== null && (
         <CButton

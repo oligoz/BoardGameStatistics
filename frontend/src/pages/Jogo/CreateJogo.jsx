@@ -5,11 +5,13 @@ import JogoCard from "../../components/cards/JogoCard";
 import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import JogoPaginatedList from "../../components/lists/JogoPaginatedList";
+import useJogosStore from "../../store/jogosStore";
 
 function CreateJogo() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const navigate = useNavigate();
+  const clearJogos = useJogosStore((state) => state.clearJogos);
 
   const handleSearch = async (e) => {
     setLoading(true);
@@ -42,6 +44,7 @@ function CreateJogo() {
 
     try {
       const res = await api.post("api/jogo/create/", jogosToAdd);
+      clearJogos();
       navigate("/jogos");
     } catch (error) {
       alert(error);

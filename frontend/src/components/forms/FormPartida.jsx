@@ -11,6 +11,7 @@ function FormPartida() {
   const [locais, setLocais] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const clearPartidas = usePartidasStore((state) => state.clearPartidas);
 
   const handleCreatePartida = (e) => {
     setLoading(true);
@@ -33,6 +34,7 @@ function FormPartida() {
       })
       .then((res) => res.data)
       .then((data) => {
+        clearPartidas();
         navigate("/partida/update/" + data.id);
       })
       .catch((error) => alert(error))

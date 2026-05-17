@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { CButton, CFormInput, CSpinner } from "@coreui/react";
 import "../../styles/Form.css";
+import useLocaisStore from "../../store/locaisStore";
 
 function FormLocal({ type, local }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState(null);
   const navigate = useNavigate();
+  const clearLocais = useLocaisStore((state) => state.clearLocais);
 
   const handleCreateLocal = (e) => {
     setLoading(true);
@@ -21,7 +23,10 @@ function FormLocal({ type, local }) {
   const updateLocal = (nome) => {
     api
       .patch("api/local/update/" + local.id + "/", { nome })
-      .then((res) => navigate("/locais"))
+      .then((res) => {
+        clearLocais();
+        navigate("/locais");
+      })
       .catch((error) => {
         setErrors(error.response.data.nome);
       })
@@ -31,7 +36,10 @@ function FormLocal({ type, local }) {
   const createLocal = (nome) => {
     api
       .post("/api/local/create/", { nome })
-      .then((res) => navigate("/locais"))
+      .then((res) => {
+        clearLocais();
+        navigate("/locais");
+      })
       .catch((error) => {
         setErrors(error.response.data.nome);
       })
@@ -43,7 +51,10 @@ function FormLocal({ type, local }) {
       setLoading(true);
       api
         .delete("api/local/delete/" + id + "/")
-        .then((res) => navigate("/locais"))
+        .then((res) => {
+          clearLocais();
+          navigate("/locais");
+        })
         .catch((error) => {
           setErrors(error.response.data.msg);
         })

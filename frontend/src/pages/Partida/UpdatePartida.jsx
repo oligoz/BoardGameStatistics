@@ -16,6 +16,7 @@ import CIcon from "@coreui/icons-react";
 import { cilCasino, cilLocationPin, cilCalendar } from "@coreui/icons";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../../store/userStore";
+import usePartidasStore from "../../store/partidasStore";
 
 function UpdatePartida() {
   const { id } = useParams();
@@ -25,6 +26,7 @@ function UpdatePartida() {
   const [loading, setLoading] = useState(false);
   const [edit, setEdit] = useState(false);
   const navigate = useNavigate();
+  const clearPartidas = usePartidasStore((state) => state.clearPartidas);
 
   useEffect(() => {
     api
@@ -94,7 +96,10 @@ function UpdatePartida() {
       .put("/api/partida/update/" + id + "/", {
         classificacao: Object.values(jogadoresData),
       })
-      .then(() => navigate("/partidas"))
+      .then(() => {
+        clearPartidas();
+        navigate("/partidas");
+      })
       .catch((error) => alert(error))
       .finally(() => setLoading(false));
     return;
@@ -103,7 +108,10 @@ function UpdatePartida() {
   const deletePartida = () => {
     api
       .delete("/api/partida/delete/" + id + "/")
-      .then(() => navigate("/partidas"))
+      .then(() => {
+        clearPartidas();
+        navigate("/partidas");
+      })
       .catch((error) => alert(error))
       .finally(() => setLoading(false));
   };
