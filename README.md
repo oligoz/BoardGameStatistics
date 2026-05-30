@@ -1,5 +1,12 @@
 # Board Game Statistics
 
+[![Vercel](https://img.shields.io/badge/deploy-vercel-000000?logo=vercel&logoColor=white)](https://board-game-statistics.vercel.app)
+![React](https://img.shields.io/badge/frontend-React%2019-61DAFB?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/build-Vite%207-646CFF?logo=vite&logoColor=white)
+![Django](https://img.shields.io/badge/backend-Django%206-092E20?logo=django&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+[![GitHub License](https://img.shields.io/github/license/oligoz/BoardGameStatistics)](LICENSE)
+
 Aplicação full stack para gerenciamento de partidas de jogos de tabuleiro, com cadastro de jogadores, jogos, locais, partidas, classificação por pontuação e integração com dados do BoardGameGeek (BGG).
 
 ## Deploy
